@@ -1,0 +1,43 @@
+name: 'Hello World'  # Nom de l'action
+
+description: 'Greet someone'  # Brève description de ce que fait l'action
+
+inputs:
+  who-to-greet:  # Identifiant de l’entrée utilisateur
+    description: 'Who to greet'  # Description de ce que représente l'entrée
+    required: true  # L’entrée est obligatoire
+    default: 'World'  # Valeur par défaut si aucun argument n’est fourni
+
+outputs:
+  random-number:  # Identifiant de la sortie
+    description: "Random number"  # Description de la sortie
+    value: ${{ steps.random-number-generator.outputs.random-number }}
+    # La valeur est récupérée depuis la sortie du step 'random-number-generator'
+
+runs:
+  using: "composite"  # Type d’action : composite (exécute une séquence de commandes)
+  steps:
+    - name: Set Greeting
+      run: echo "Hello $INPUT_WHO_TO_GREET."  # Affiche un message de salutation
+      shell: bash
+      env:
+        INPUT_WHO_TO_GREET: ${{ inputs.who-to-greet }}  # Transfert de l’input en variable d’environnement
+
+    - name: Random Number Generator
+      id: random-number-generator
+      run: echo "random-number=$(echo $RANDOM)" >> $GITHUB_OUTPUT
+      # $RANDOM est une variable spéciale de Bash qui génère un entier aléatoire entre 0 et 32767
+      # La ligne écrit cette valeur au format clé=valeur dans le fichier $GITHUB_OUTPUT
+      # Cela permet à l'action d'exposer ce nombre comme une sortie réutilisable
+      shell: bash
+
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      # Ajoute le chemin de l’action au PATH GitHub pour rendre les scripts locaux exécutables
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}  # Chemin de l’action courante
+
+    - name: Run goodbye.sh
+      run: goodbye.sh  # Exécute un script appelé goodbye.sh (doit exister dans le répertoire de l'action)
+      shell: bash
